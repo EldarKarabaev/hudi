@@ -81,7 +81,7 @@
                   <include>org.eclipse.jetty.websocket:*</include>
                   <include>org.jetbrains.kotlin:*</include>
                   <include>org.rocksdb:rocksdbjni</include>
-                  <include>org.apache.httpcomponents:httpclient</include>
+                  <!--include>org.apache.httpcomponents:httpclient</include-->
                   <include>org.apache.httpcomponents:httpcore</include>
                   <include>org.apache.httpcomponents:fluent-hc</include>
                   <include>org.antlr:stringtemplate</include>
@@ -118,6 +118,10 @@
                 </includes>
               </artifactSet>
               <relocations>
+                <relocation>
+                  <pattern>org.eclipse.jetty.</pattern>
+                  <shadedPattern>org.apache.hudi.org.eclipse.jetty.</shadedPattern>
+                </relocation>
                 <relocation>
                   <pattern>com.yammer.metrics.</pattern>
                   <shadedPattern>org.apache.hudi.com.yammer.metrics.</shadedPattern>
