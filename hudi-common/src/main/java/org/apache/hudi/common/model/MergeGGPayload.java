@@ -23,14 +23,21 @@ import org.apache.avro.generic.GenericRecord;
 import org.apache.avro.generic.IndexedRecord;
 import org.apache.hudi.avro.HoodieAvroUtils;
 import org.apache.hudi.common.util.Option;
+import org.apache.hudi.exception.HoodieException;
 
 import java.io.IOException;
 import java.util.List;
-import java.util.Map;
-import java.util.TreeMap;
 
 /**
- * Default payload used for delta streamer.
+ * GG partial-update payload with validity map.
+ * Assumes dataset to have the following columns:
+ * <ol>
+ *   <li>gg_data - original GG message data as a string</li>
+ *   <li>gg_validity_map - empty String, to be used and filled internally during partial update</li>
+ *   <li>meta - structure with technical fields</li>
+ *   <li>RECORD_KEY - standard record key</li>
+ *   <li>PRECOMBINE_KEY - standard precombine key (sort key)</li>
+ * </ol>
  *
  * <ol>
  * <li> preCombine - Picks the latest delta record for a key, based on an ordering field;
@@ -44,32 +51,43 @@ public class MergeGGPayload extends BaseAvroPayload
     System.out.println("[MergeGGPayload: ]" + s);
   }
 
-  public static final String GG_DATA_COLUMN_NAME = "sys_origin_json";
+  public static final String GG_DATA_COLUMN_NAME = "gg_data"; // original GG data represented as a String
+  public static final String VALIDITY_MAP_COLUMN_NAME = "gg_validity_map"; // resulting validity map represented as String
 
   // GG specific fields
   String ggDataJson;
-  Map<String, Long> valuePositions;
+  GGPayload ggPayload;
 
-  private void initValuePositions(GenericRecord record){
-    Object ggDataJsonField = record.get(GG_DATA_COLUMN_NAME);
-    if(ggDataJsonField == null){
-      sysout("Field " + GG_DATA_COLUMN_NAME + " not found, GG-MERGE is OFF");
-    } else {
-      ggDataJson = ggDataJsonField.toString();
-      sysout("GG-MERGE is ON, gg_data: " + ggDataJson);
-      valuePositions = new TreeMap<>();
-    }
-  }
 
+  /*
+   * Life-Cycle 1: initialization from GenericRecord
+   */
   public MergeGGPayload(GenericRecord record, Comparable orderingVal) {
     super(record, orderingVal);
-    initValuePositions(record);
+    initFromRecord(record);
   }
-
   public MergeGGPayload(Option<GenericRecord> record) {
     this(record.isPresent() ? record.get() : null, 0); // natural order
   }
+  private void initFromRecord(GenericRecord record) {
+    Object ggDataField = record.get(GG_DATA_COLUMN_NAME)
+      , validityMapField = record.get(VALIDITY_MAP_COLUMN_NAME)
+      ;
+    if(ggDataField == null){
+      throw new HoodieException("GG Column not found [" + GG_DATA_COLUMN_NAME + "] in record: " + record);
+    }
+    if(validityMapField == null){
+      throw new HoodieException("VAL_MAP Column not found [" + VALIDITY_MAP_COLUMN_NAME + "] in record: " + record);
+    }
 
+    this.ggDataJson = ggDataField.toString();
+    this.ggPayload = new GGPayload(this.ggDataJson);
+  }
+
+  /*
+   * Life-Cycle 2: single comparison
+   * New feature: the winner merges missing fields from the looser and updates his validityMap accordingly
+   */
   @Override
   public MergeGGPayload preCombine(MergeGGPayload another) {
     // pick the payload with greatest ordering value
@@ -81,21 +99,14 @@ public class MergeGGPayload extends BaseAvroPayload
       return this;
     }
   }
-
-  private String indexedRecordToString(IndexedRecord record){
-    String res = "";
-    Schema schema = record.getSchema();
-    if(schema != null) {
-      List<Schema.Field> fields = schema.getFields();
-      for (Schema.Field field : fields) {
-        res += (res.length() == 0 ? "IndexedRecord: " + field.toString() : "," + field.toString());
-      }
-    } else {
-      sysout("Warning. IndexedRecord with null schema: " + record);
-    }
-    return res;
+  public MergeGGPayload mergeValuesFromAnother(MergeGGPayload another){
+    //TO DO: merge values and update validity map
+    return this;
   }
 
+  /*
+   * Life-Cycle 3: Combine me with existing record <currentValue>, return the result as an indexed record
+   */
   @Override
   public Option<IndexedRecord> combineAndGetUpdateValue(IndexedRecord currentValue, Schema schema) throws IOException {
     sysout("Combine. This   schema: " + schema.toString());
@@ -118,6 +129,23 @@ public class MergeGGPayload extends BaseAvroPayload
       return Option.of(indexedRecord);
     }
   }
+
+
+
+  private String indexedRecordToString(IndexedRecord record){
+    String res = "";
+    Schema schema = record.getSchema();
+    if(schema != null) {
+      List<Schema.Field> fields = schema.getFields();
+      for (Schema.Field field : fields) {
+        res += (res.length() == 0 ? "IndexedRecord: " + field.toString() : "," + field.toString());
+      }
+    } else {
+      sysout("Warning. IndexedRecord with null schema: " + record);
+    }
+    return res;
+  }
+
 
   /**
    * @param genericRecord instance of {@link GenericRecord} of interest.
