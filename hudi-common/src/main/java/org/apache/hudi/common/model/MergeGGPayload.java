@@ -26,6 +26,7 @@ import org.apache.hudi.common.util.Option;
 import org.apache.hudi.exception.HoodieException;
 
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -54,17 +55,26 @@ public class MergeGGPayload extends BaseAvroPayload
   public static final String GG_DATA_COLUMN_NAME = "gg_data"; // original GG data represented as a String
   public static final String VALIDITY_MAP_COLUMN_NAME = "gg_validity_map"; // resulting validity map represented as String
 
-  // GG specific fields
-  String ggDataJson;
-  GGPayload ggPayload;
+  // This GenericRecord and bytes
+  private GenericRecord myRecord;
+  private byte[] updatedRecordBytes;
 
+  // ValidityMap
+  String validityDataJson;
+
+  // GG specific fields
+  private String ggDataJson;
+  private GGPayload ggPayload;
+  public GGPayload getGgPayload() {return this.ggPayload;}
 
   /*
-   * Life-Cycle 1: initialization from GenericRecord
+   * Life-Cycle 1: initialization from a GenericRecord
    */
   public MergeGGPayload(GenericRecord record, Comparable orderingVal) {
     super(record, orderingVal);
+    myRecord = record;
     initFromRecord(record);
+    this.updatedRecordBytes = Arrays.copyOf(this.recordBytes, this.recordBytes.length);
   }
   public MergeGGPayload(Option<GenericRecord> record) {
     this(record.isPresent() ? record.get() : null, 0); // natural order
@@ -81,7 +91,12 @@ public class MergeGGPayload extends BaseAvroPayload
     }
 
     this.ggDataJson = ggDataField.toString();
-    this.ggPayload = new GGPayload(this.ggDataJson);
+    this.validityDataJson = validityMapField.toString();
+    this.ggPayload = new GGPayload(this.ggDataJson, this.validityDataJson, this.myRecord);
+  }
+
+  private void updateRecordBytes() {
+    this.updatedRecordBytes = myRecord!= null ? HoodieAvroUtils.avroToBytes(myRecord) : new byte[0];
   }
 
   /*
@@ -94,13 +109,17 @@ public class MergeGGPayload extends BaseAvroPayload
     sysout("Precombine. This    gg_data: " + this.ggDataJson);
     sysout("Precombine. Another gg_data: " + another.ggDataJson);
     if (another.orderingVal.compareTo(orderingVal) > 0) {
+      another.mergeValuesFromAnother(this);
       return another;
     } else {
+      this.mergeValuesFromAnother(another);
       return this;
     }
   }
   public MergeGGPayload mergeValuesFromAnother(MergeGGPayload another){
-    //TO DO: merge values and update validity map
+    if(this.ggPayload.mergeAnother(another.getGgPayload())){
+      this.updateRecordBytes();
+    }
     return this;
   }
 
@@ -109,24 +128,37 @@ public class MergeGGPayload extends BaseAvroPayload
    */
   @Override
   public Option<IndexedRecord> combineAndGetUpdateValue(IndexedRecord currentValue, Schema schema) throws IOException {
-    sysout("Combine. This   schema: " + schema.toString());
-    sysout("Combine. CurVal schema: " + currentValue.getSchema().toString());
-    sysout("Combine. This gg_data: " + this.ggDataJson);
-    sysout("Combine. CurVal  data: " + indexedRecordToString(currentValue));
+    if(currentValue != null) {
+      //   convert currentValue into MergeGGPayload
+      byte[] currentValueBytes = HoodieAvroUtils.indexedRecordToBytes(currentValue);
+      GenericRecord currentGenericRecord = HoodieAvroUtils.bytesToAvro(currentValueBytes, schema);
+      MergeGGPayload currentMergeGGPayload = new MergeGGPayload(currentGenericRecord, 0);
+      //   merge data from currentValue into me
+      this.mergeValuesFromAnother(currentMergeGGPayload);
+    }
     return getInsertValue(schema);
   }
 
+  /*
+   * Life-Cycle 4: Return final variant of the record to be inserted
+   */
   @Override
   public Option<IndexedRecord> getInsertValue(Schema schema) throws IOException {
-    if (recordBytes.length == 0) {
+    //   update value of my "gg_data" field
+    this.myRecord.put(GG_DATA_COLUMN_NAME, this.ggPayload.getGgDataAsJsonString());
+    //   update value of my "gg_validity_map" field
+    this.myRecord.put(VALIDITY_MAP_COLUMN_NAME, this.ggPayload.getValidityMapAsJsonString());
+    this.updateRecordBytes();
+
+    if (this.updatedRecordBytes.length == 0) {
       return Option.empty();
     }
-    IndexedRecord indexedRecord = HoodieAvroUtils.bytesToAvro(recordBytes, schema);
-    sysout("GetInsert. " + indexedRecordToString(indexedRecord));
+    IndexedRecord indexedRecord = HoodieAvroUtils.bytesToAvro(this.updatedRecordBytes, schema);
     if (isDeleteRecord((GenericRecord) indexedRecord)) {
       return Option.empty();
     } else {
-      return Option.of(indexedRecord);
+      //   return copy of my record
+      return Option.of(HoodieAvroUtils.bytesToAvro(this.updatedRecordBytes, schema));
     }
   }
 
