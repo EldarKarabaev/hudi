@@ -1,5 +1,7 @@
 package org.apache.hudi.common.model;
 
+import com.esotericsoftware.kryo.Kryo;
+import com.esotericsoftware.kryo.serializers.JavaSerializer;
 import org.apache.avro.data.Json;
 import org.apache.avro.generic.GenericRecord;
 import org.apache.log4j.LogManager;
@@ -10,6 +12,10 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 
 public class GGPayload implements Serializable {
+  static {
+    new Kryo().register(GGPayload.class, new JavaSerializer());
+  }
+
   private static final Logger LOG = LogManager.getLogger(GGPayload.class);
 
   private GenericRecord record;

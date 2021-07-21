@@ -18,6 +18,8 @@
 
 package org.apache.hudi.common.model;
 
+import com.esotericsoftware.kryo.Kryo;
+import com.esotericsoftware.kryo.serializers.JavaSerializer;
 import org.apache.avro.Schema;
 import org.apache.avro.generic.GenericRecord;
 import org.apache.avro.generic.IndexedRecord;
@@ -47,6 +49,11 @@ import java.util.List;
  */
 public class MergeGGPayload extends BaseAvroPayload
     implements HoodieRecordPayload<MergeGGPayload> {
+
+  static {
+    new Kryo().register(MergeGGPayload.class, new JavaSerializer());
+  }
+
 
   public static void sysout(String s){
     System.out.println("[MergeGGPayload: ]" + s);
