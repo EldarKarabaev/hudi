@@ -80,15 +80,15 @@ public class MergeGGPayload extends BaseAvroPayload
     if (recordBytes.length == 0) {
       return Option.empty();
     }
-    IndexedRecord indexedRecord = HoodieAvroUtils.bytesToAvro(recordBytes, schema);
+    IndexedRecord indexedRecord = HoodieAvroUtils.bytesToAvro(myAvroBytes, schema);
     if (isDeleteRecord((GenericRecord) indexedRecord)) {
       return Option.empty();
     } else {
       int index = indexedRecord.getSchema().getIndexNamed(GG_DATA_MAP_COLUMN_NAME);
       Map ggDataMap = (Map)indexedRecord.get(index);
-      String origAfterString = ggDataMap.get("after").toString();
+      String origPosString = ggDataMap.get("pos").toString();
       TreeMap<String, String> newValidityMap = new TreeMap<>();
-      newValidityMap.put("orig_after: ", origAfterString);
+      newValidityMap.put("pos: ", origPosString);
       ((GenericRecord) indexedRecord).put(GG_VALIDITY_MAP_COLUMN_NAME, newValidityMap);
       return Option.of(indexedRecord);
     }
