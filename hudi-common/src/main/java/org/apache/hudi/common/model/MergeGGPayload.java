@@ -41,6 +41,8 @@ public class MergeGGPayload extends BaseAvroPayload
   public final String GG_DATA_MAP_COLUMN_NAME = "_gg_data_map";
   public final String GG_VALIDITY_MAP_COLUMN_NAME = "_gg_validity_map";
 
+  private byte[] myAvroBytes;
+
   public MergeGGPayload(GenericRecord record, Comparable orderingVal) {
     super(record, orderingVal);
     if(record.get(GG_DATA_MAP_COLUMN_NAME) == null){
@@ -49,6 +51,7 @@ public class MergeGGPayload extends BaseAvroPayload
     if(record.get(GG_VALIDITY_MAP_COLUMN_NAME) == null){
       throw new HoodieException("Column not found: " + GG_VALIDITY_MAP_COLUMN_NAME + " in " + record);
     }
+    myAvroBytes = record != null ? HoodieAvroUtils.avroToBytes(record) : new byte[0];
   }
 
   public MergeGGPayload(Option<GenericRecord> record) {
