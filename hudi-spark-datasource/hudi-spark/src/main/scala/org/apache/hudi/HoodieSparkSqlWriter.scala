@@ -150,7 +150,9 @@ object HoodieSparkSqlWriter {
           val (structName, nameSpace) = AvroConversionUtils.getAvroRecordNameAndNamespace(tblName)
           sparkContext.getConf.registerKryoClasses(
             Array(classOf[org.apache.avro.generic.GenericData],
-              classOf[org.apache.avro.Schema]))
+              classOf[org.apache.avro.Schema],
+              classOf[org.apache.hudi.common.model.GGPayload],
+              classOf[org.apache.hudi.common.model.MergeGGPayload]))
           val schema = AvroConversionUtils.convertStructTypeToAvroSchema(df.schema, structName, nameSpace)
           sparkContext.getConf.registerAvroSchemas(schema)
           log.info(s"Registered avro schema : ${schema.toString(true)}")
@@ -199,7 +201,9 @@ object HoodieSparkSqlWriter {
           val nameSpace = s"hoodie.${tblName}"
           sparkContext.getConf.registerKryoClasses(
             Array(classOf[org.apache.avro.generic.GenericData],
-              classOf[org.apache.avro.Schema]))
+              classOf[org.apache.avro.Schema],
+              classOf[org.apache.hudi.common.model.GGPayload],
+              classOf[org.apache.hudi.common.model.MergeGGPayload]))
 
           // Convert to RDD[HoodieKey]
           val genericRecords: RDD[GenericRecord] = HoodieSparkUtils.createRdd(df, structName, nameSpace)
@@ -328,7 +332,9 @@ object HoodieSparkSqlWriter {
     val (structName, nameSpace) = AvroConversionUtils.getAvroRecordNameAndNamespace(tblName)
     sparkContext.getConf.registerKryoClasses(
       Array(classOf[org.apache.avro.generic.GenericData],
-        classOf[org.apache.avro.Schema]))
+        classOf[org.apache.avro.Schema],
+        classOf[org.apache.hudi.common.model.GGPayload],
+        classOf[org.apache.hudi.common.model.MergeGGPayload]))
     val schema = AvroConversionUtils.convertStructTypeToAvroSchema(df.schema, structName, nameSpace)
     sparkContext.getConf.registerAvroSchemas(schema)
     log.info(s"Registered avro schema : ${schema.toString(true)}")

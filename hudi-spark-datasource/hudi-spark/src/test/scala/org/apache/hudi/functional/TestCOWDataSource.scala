@@ -122,7 +122,9 @@ class TestCOWDataSource extends HoodieClientTestBase {
     val (structName, nameSpace) = AvroConversionUtils.getAvroRecordNameAndNamespace(commonOpts(HoodieWriteConfig.TABLE_NAME.key))
     spark.sparkContext.getConf.registerKryoClasses(
       Array(classOf[org.apache.avro.generic.GenericData],
-        classOf[org.apache.avro.Schema]))
+        classOf[org.apache.avro.Schema],
+        classOf[org.apache.hudi.common.model.GGPayload],
+        classOf[org.apache.hudi.common.model.MergeGGPayload]))
     val schema = AvroConversionUtils.convertStructTypeToAvroSchema(structType, structName, nameSpace)
     assertTrue(actualSchema != null)
     assertEquals(schema, actualSchema)
