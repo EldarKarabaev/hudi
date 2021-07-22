@@ -94,8 +94,16 @@ public class MergeGGPayload extends BaseAvroPayload
 
       //((Map)((GenericRecord) indexedRecord).get(GG_DATA_MAP_COLUMN_NAME))
       //  .put("ValMapClass",valMapClassName);
-      ((Map)((GenericRecord) indexedRecord).get(GG_DATA_MAP_COLUMN_NAME))
-        .put("record",indexedRecord.toString());
+      Map ggDataMap = ((Map)((GenericRecord) indexedRecord).get(GG_DATA_MAP_COLUMN_NAME));
+      ggDataMap.put("record",indexedRecord.toString());
+      ggDataMap.put("recordClass",indexedRecord.getClass().getCanonicalName());
+      Object valMap = ((GenericRecord) indexedRecord).get(GG_VALIDITY_MAP_COLUMN_NAME);
+      if(valMap == null){
+        ggDataMap.put("valMap","null");
+      } else {
+        ggDataMap.put("valClass",valMap.getClass().getCanonicalName());
+        ggDataMap.put("valMap",valMap.toString());
+      }
       ((GenericRecord) indexedRecord).put("feld","recordBytes:" + recordBytes.length + ", myAvroBytes:" + myAvroBytes.length);
       return Option.of(indexedRecord);
     }
