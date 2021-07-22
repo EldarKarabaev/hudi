@@ -19,6 +19,7 @@
 package org.apache.hudi.common.model;
 
 import org.apache.avro.Schema;
+import org.apache.avro.data.Json;
 import org.apache.avro.generic.GenericRecord;
 import org.apache.avro.generic.IndexedRecord;
 import org.apache.hudi.avro.HoodieAvroUtils;
@@ -113,6 +114,25 @@ public class MergeGGPayload extends BaseAvroPayload
         ggDataMap.put("valMapClass",valMap.getClass().getCanonicalName());
         ggDataMap.put("valMap",valMap.toString());
       }
+      Object afterObject = ggDataMap.get("after");
+      if(afterObject != null){
+        ggDataMap.put("afterObjectClass", afterObject.getClass().getCanonicalName());
+        if(Json.parseJson(afterObject.toString()) instanceof Map) {
+          Map afterJson = (Map) Json.parseJson(afterObject.toString());
+          String afterJsonContents = "";
+          for(Object key: afterJson.keySet()){
+            afterJsonContents = (afterJsonContents.length()==0?"":",") + key.toString()
+              + "=" + (afterJson.get(key) == null?"null":afterJson.get(key));
+          }
+          afterJsonContents = "{" + afterJsonContents + "}";
+          ggDataMap.put("afterJsonContents", afterJsonContents);
+        } else {
+          ggDataMap.put("afterObject", "not Map");
+        }
+      } else {
+        ggDataMap.put("afterObject", "null");
+      }
+
       ((GenericRecord) indexedRecord).put("feld","recordBytes:" + recordBytes.length + ", myAvroBytes:" + myAvroBytes.length);
       return Option.of(indexedRecord);
     }
