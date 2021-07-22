@@ -124,7 +124,9 @@ class TestCOWDataSource extends HoodieClientTestBase {
       Array(classOf[org.apache.avro.generic.GenericData],
         classOf[org.apache.avro.Schema],
         classOf[org.apache.hudi.common.model.GGPayload],
-        classOf[org.apache.hudi.common.model.MergeGGPayload]))
+        classOf[org.apache.hudi.common.model.MergeGGPayload],
+        classOf[org.apache.avro.generic.GenericData],
+        classOf[org.apache.avro.generic.GenericData.Record]))
     val schema = AvroConversionUtils.convertStructTypeToAvroSchema(structType, structName, nameSpace)
     assertTrue(actualSchema != null)
     assertEquals(schema, actualSchema)

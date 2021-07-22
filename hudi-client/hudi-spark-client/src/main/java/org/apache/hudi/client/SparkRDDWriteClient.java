@@ -96,6 +96,7 @@ public class SparkRDDWriteClient<T extends HoodieRecordPayload> extends
   public static SparkConf registerClasses(SparkConf conf) {
     conf.registerKryoClasses(new Class[]{HoodieWriteConfig.class, HoodieRecord.class, HoodieKey.class
       , org.apache.hudi.common.model.MergeGGPayload.class, org.apache.hudi.common.model.GGPayload.class
+      , org.apache.avro.generic.GenericData.class, org.apache.avro.generic.GenericData.Record.class
     });
     return conf;
   }
