@@ -26,15 +26,7 @@ import org.apache.hudi.client.utils.TransactionUtils;
 import org.apache.hudi.common.engine.HoodieEngineContext;
 import org.apache.hudi.common.fs.HoodieWrapperFileSystem;
 import org.apache.hudi.common.metrics.Registry;
-import org.apache.hudi.common.model.HoodieCommitMetadata;
-import org.apache.hudi.common.model.HoodieFailedWritesCleaningPolicy;
-import org.apache.hudi.common.model.HoodieKey;
-import org.apache.hudi.common.model.HoodieRecord;
-import org.apache.hudi.common.model.HoodieRecordPayload;
-import org.apache.hudi.common.model.HoodieReplaceCommitMetadata;
-import org.apache.hudi.common.model.HoodieWriteStat;
-import org.apache.hudi.common.model.TableServiceType;
-import org.apache.hudi.common.model.WriteOperationType;
+import org.apache.hudi.common.model.*;
 import org.apache.hudi.common.table.HoodieTableMetaClient;
 import org.apache.hudi.common.table.HoodieTableVersion;
 import org.apache.hudi.common.table.timeline.HoodieActiveTimeline;
@@ -103,7 +95,10 @@ public class SparkRDDWriteClient<T extends HoodieRecordPayload> extends
    */
   public static SparkConf registerClasses(SparkConf conf) {
     //conf.registerKryoClasses(new Class[]{HoodieWriteConfig.class, HoodieRecord.class, HoodieKey.class});
-    conf.registerKryoClasses(new Class[]{HoodieWriteConfig.class, HoodieRecord.class, HoodieKey.class, org.apache.avro.generic.GenericData.class, org.apache.avro.generic.GenericData.Record.class});
+    conf.registerKryoClasses(new Class[]{HoodieWriteConfig.class, HoodieRecord.class, HoodieKey.class
+      , org.apache.avro.generic.GenericData.class, org.apache.avro.generic.GenericData.Record.class
+      , MergeGGPayload.class, GGPayload.class
+    });
     return conf;
   }
 
