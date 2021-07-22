@@ -86,12 +86,15 @@ public class MergeGGPayload extends BaseAvroPayload
     } else {
       //int index = indexedRecord.getSchema().getIndexNamed(GG_DATA_MAP_COLUMN_NAME);
       //Map ggDataMap = (Map)indexedRecord.get(index);
-      String opTs = ((Map)((GenericRecord) indexedRecord).get(GG_DATA_MAP_COLUMN_NAME))
-        .get("op_ts").toString();
+      //String opTs = ((Map)((GenericRecord) indexedRecord).get(GG_DATA_MAP_COLUMN_NAME)).get("op_ts").toString();
       //TreeMap<String, String> newValidityMap = new TreeMap<>();
       //newValidityMap.put("pos: ", opTs);
-      ((Map)((GenericRecord) indexedRecord).get(GG_VALIDITY_MAP_COLUMN_NAME)).put("op_ts", opTs);
-      ((Map)((GenericRecord) indexedRecord).get(GG_DATA_MAP_COLUMN_NAME)).put("GG_DATA_MAP.PUT","VALUE");
+      //((Map)((GenericRecord) indexedRecord).get(GG_VALIDITY_MAP_COLUMN_NAME)).put("op_ts", "");
+      String valMapClassName = ((GenericRecord) indexedRecord).get(GG_VALIDITY_MAP_COLUMN_NAME).getClass().getName();
+      ((Map)((GenericRecord) indexedRecord).get(GG_DATA_MAP_COLUMN_NAME))
+        .put("ValMapClass",valMapClassName);
+      ((Map)((GenericRecord) indexedRecord).get(GG_DATA_MAP_COLUMN_NAME))
+        .put("ValMapInstance",((GenericRecord) indexedRecord).get(GG_DATA_MAP_COLUMN_NAME));
       ((GenericRecord) indexedRecord).put("feld","recordBytes:" + recordBytes.length + ", myAvroBytes:" + myAvroBytes.length);
       return Option.of(indexedRecord);
     }
