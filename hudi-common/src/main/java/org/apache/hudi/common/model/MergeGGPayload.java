@@ -23,6 +23,7 @@ import org.apache.avro.generic.GenericRecord;
 import org.apache.avro.generic.IndexedRecord;
 import org.apache.hudi.avro.HoodieAvroUtils;
 import org.apache.hudi.common.util.Option;
+import org.apache.hudi.exception.HoodieException;
 
 import java.io.IOException;
 
@@ -37,8 +38,17 @@ import java.io.IOException;
 public class MergeGGPayload extends BaseAvroPayload
     implements HoodieRecordPayload<MergeGGPayload> {
 
+  public final String GG_DATA_MAP_COLUMN_NAME = "_gg_data_map";
+  public final String GG_VALIDITY_MAP_COLUMN_NAME = "_gg_validity_map";
+
   public MergeGGPayload(GenericRecord record, Comparable orderingVal) {
     super(record, orderingVal);
+    if(record.get(GG_DATA_MAP_COLUMN_NAME) == null){
+      throw new HoodieException("Column not found: " + GG_DATA_MAP_COLUMN_NAME + " in " + record);
+    }
+    if(record.get(GG_VALIDITY_MAP_COLUMN_NAME) == null){
+      throw new HoodieException("Column not found: " + GG_VALIDITY_MAP_COLUMN_NAME + " in " + record);
+    }
   }
 
   public MergeGGPayload(Option<GenericRecord> record) {
