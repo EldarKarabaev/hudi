@@ -90,7 +90,7 @@ public class MergeGGPayload extends BaseAvroPayload
       //TreeMap<String, String> newValidityMap = new TreeMap<>();
       //newValidityMap.put("pos: ", origPosString);
       //((GenericRecord) indexedRecord).put(GG_VALIDITY_MAP_COLUMN_NAME, newValidityMap);
-      //((Map)((GenericRecord) indexedRecord).get(GG_DATA_MAP_COLUMN_NAME)).put("DIRECT_PUT","VALUE");
+      ((Map)((GenericRecord) indexedRecord).get(GG_DATA_MAP_COLUMN_NAME)).put("GG_DATA_MAP.PUT","VALUE");
       ((GenericRecord) indexedRecord).put("feld","recordBytes:" + recordBytes.length + ", myAvroBytes:" + myAvroBytes.length);
       return Option.of(indexedRecord);
     }
