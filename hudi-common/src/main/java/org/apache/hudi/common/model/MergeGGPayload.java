@@ -94,44 +94,49 @@ public class MergeGGPayload extends BaseAvroPayload
     if (isDeleteRecord((GenericRecord) indexedRecord)) {
       return Option.empty();
     } else {
-      //int index = indexedRecord.getSchema().getIndexNamed(GG_DATA_MAP_COLUMN_NAME);
-      //Map ggDataMap = (Map)indexedRecord.get(index);
-      //String opTs = ((Map)((GenericRecord) indexedRecord).get(GG_DATA_MAP_COLUMN_NAME)).get("op_ts").toString();
-      //TreeMap<String, String> newValidityMap = new TreeMap<>();
-      //newValidityMap.put("pos: ", opTs);
-      //((Map)((GenericRecord) indexedRecord).get(GG_VALIDITY_MAP_COLUMN_NAME)).put("op_ts", "");
-      //String valMapClassName = ((GenericRecord) indexedRecord).get(GG_VALIDITY_MAP_COLUMN_NAME).getClass().getName();
-
-      //((Map)((GenericRecord) indexedRecord).get(GG_DATA_MAP_COLUMN_NAME))
-      //  .put("ValMapClass",valMapClassName);
       Map ggDataMap = (Map)(((GenericRecord) indexedRecord).get(GG_DATA_MAP_COLUMN_NAME));
-      ggDataMap.put("record",indexedRecord.toString());
-      ggDataMap.put("recordClass",indexedRecord.getClass().getCanonicalName());
-      Object valMap = (((GenericRecord) indexedRecord).get(GG_VALIDITY_MAP_COLUMN_NAME));
+      String ggDataMapContents = "";
+      if(ggDataMap != null) {
+        for (Object key : ggDataMap.keySet()) {
+          Object value = ggDataMap.get(key);
+          ggDataMapContents = (ggDataMapContents.length() == 0?"":",")
+            + key.toString()
+            + ": " + (value==null?"null":"(" + value.getClass().getCanonicalName() + ")" + value.toString());
+        }
+        ggDataMap.put("ggDataMapContents", "(" + ggDataMap.getClass().getCanonicalName() + "){" + ggDataMapContents + "}");
+
+
+        /*
+        Object afterObject = ggDataMap.get("after");
+        if(afterObject != null){
+          ggDataMap.put("afterObjectClass", afterObject.getClass().getCanonicalName());
+          if(Json.parseJson(afterObject.toString()) instanceof Map) {
+            Map afterJson = (Map) Json.parseJson(afterObject.toString());
+            String afterJsonContents = "";
+            for(Object key: afterJson.keySet()){
+              afterJsonContents = (afterJsonContents.length()==0?"":",") + key.toString()
+                + "=" + (afterJson.get(key) == null?"null":afterJson.get(key));
+            }
+            afterJsonContents = "{" + afterJsonContents + "}";
+            ggDataMap.put("afterJsonContents", afterJsonContents);
+          } else {
+            ggDataMap.put("afterObject", "not Map");
+          }
+        } else {
+          ggDataMap.put("afterObject", "null");
+        }
+        */
+      }
+
+      Map valMap = (Map)(((GenericRecord) indexedRecord).get(GG_VALIDITY_MAP_COLUMN_NAME));
       if(valMap == null){
         ggDataMap.put("valMap","null");
       } else {
+        valMap.put("Test key", "Test Value");
         ggDataMap.put("valMapClass",valMap.getClass().getCanonicalName());
         ggDataMap.put("valMap",valMap.toString());
       }
-      Object afterObject = ggDataMap.get("after");
-      if(afterObject != null){
-        ggDataMap.put("afterObjectClass", afterObject.getClass().getCanonicalName());
-        if(Json.parseJson(afterObject.toString()) instanceof Map) {
-          Map afterJson = (Map) Json.parseJson(afterObject.toString());
-          String afterJsonContents = "";
-          for(Object key: afterJson.keySet()){
-            afterJsonContents = (afterJsonContents.length()==0?"":",") + key.toString()
-              + "=" + (afterJson.get(key) == null?"null":afterJson.get(key));
-          }
-          afterJsonContents = "{" + afterJsonContents + "}";
-          ggDataMap.put("afterJsonContents", afterJsonContents);
-        } else {
-          ggDataMap.put("afterObject", "not Map");
-        }
-      } else {
-        ggDataMap.put("afterObject", "null");
-      }
+
 
       ((GenericRecord) indexedRecord).put("feld","recordBytes:" + recordBytes.length + ", myAvroBytes:" + myAvroBytes.length);
       return Option.of(indexedRecord);
