@@ -7,6 +7,7 @@ import org.apache.avro.generic.GenericRecord;
 import org.apache.hudi.exception.HoodieException;
 
 import java.io.Serializable;
+import java.util.Map;
 import java.util.TreeMap;
 
 public class GGPayload implements Serializable {
@@ -32,7 +33,9 @@ public class GGPayload implements Serializable {
 
   public GGPayload(String ggDataJsonString, String validityMapJsonString, GenericRecord record) {
     this.record = record;
-    this.ggData = (TreeMap)Json.parseJson(ggDataJsonString);
+    this.ggData = new TreeMap<>();
+    this.ggData.putAll((Map)Json.parseJson(ggDataJsonString));
+
     this.validityMap = (TreeMap)Json.parseJson(validityMapJsonString);
     if(this.validityMap == null){
       this.validityMap = new TreeMap<>();
