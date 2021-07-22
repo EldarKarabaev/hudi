@@ -31,6 +31,8 @@ public class GGPayload implements Serializable {
     return ggData.get(name);
   }
 
+  public GGPayload(){}
+
   public GGPayload(String ggDataJsonString, String validityMapJsonString, GenericRecord record) {
     this.record = record;
     this.ggData = new TreeMap<>();
@@ -39,8 +41,14 @@ public class GGPayload implements Serializable {
     this.validityMap = (TreeMap)Json.parseJson(validityMapJsonString);
     if(this.validityMap == null){
       this.validityMap = new TreeMap<>();
-      this.before = (TreeMap) this.ggData.get("before");
-      this.after = (TreeMap)this.ggData.get("after");
+      if(this.ggData.get("before") != null) {
+        this.before = new TreeMap<>();
+        this.before.putAll((Map) this.ggData.get("before"));
+      }
+      if(this.ggData.get("after") != null) {
+        this.after = new TreeMap<>();
+        this.after.putAll((Map) this.ggData.get("after"));
+      }
       if(this.after != null) {
         String pos = this.ggData.get("pos").toString();
         for(String fieldName: this.after.keySet()){
@@ -93,6 +101,9 @@ public class GGPayload implements Serializable {
     return updatedFlag;
   }
 
+  /*
+
+
   public String mapToString(TreeMap map, String prefix){
     if(map == null)
       return "null";
@@ -106,8 +117,6 @@ public class GGPayload implements Serializable {
     }
   }
 
-
-  /*
   public String toDebugString(){
     return "ggData = " + mapToString(ggData, "  ")
          + "\nvalidity_map = " + mapToString(validityMap, "  ")
@@ -126,6 +135,11 @@ public class GGPayload implements Serializable {
     System.out.println(payload1.toDebugString());
     System.out.println(payload2.toDebugString());
     System.out.println(payload3.toDebugString());
+
+    Kryo kryo = new Kryo();
+    GGPayload copy3 = kryo.copy(payload3);
+    System.out.println("KRYO copy:");
+    System.out.println(copy3.toDebugString());
   }
 
   public static void main(String[] args){
