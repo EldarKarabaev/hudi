@@ -84,12 +84,12 @@ public class MergeGGPayload extends BaseAvroPayload
     if (isDeleteRecord((GenericRecord) indexedRecord)) {
       return Option.empty();
     } else {
-      //int index = indexedRecord.getSchema().getIndexNamed(GG_DATA_MAP_COLUMN_NAME);
-      //Map ggDataMap = (Map)indexedRecord.get(index);
-      //String origPosString = ggDataMap.get("pos").toString();
+      int index = indexedRecord.getSchema().getIndexNamed(GG_DATA_MAP_COLUMN_NAME);
+      Map ggDataMap = (Map)indexedRecord.get(index);
+      String origPosString = ggDataMap.get("pos").toString();
       //TreeMap<String, String> newValidityMap = new TreeMap<>();
       //newValidityMap.put("pos: ", origPosString);
-      //((GenericRecord) indexedRecord).put(GG_VALIDITY_MAP_COLUMN_NAME, newValidityMap);
+      ((Map)((GenericRecord) indexedRecord).get(GG_VALIDITY_MAP_COLUMN_NAME)).put("pos", origPosString);
       ((Map)((GenericRecord) indexedRecord).get(GG_DATA_MAP_COLUMN_NAME)).put("GG_DATA_MAP.PUT","VALUE");
       ((GenericRecord) indexedRecord).put("feld","recordBytes:" + recordBytes.length + ", myAvroBytes:" + myAvroBytes.length);
       return Option.of(indexedRecord);
