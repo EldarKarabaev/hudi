@@ -1,0 +1,4 @@
+#!/usr/bin/bash
+java \
+  -cp "hudi-common/target/hudi-common-0.9.0-SNAPSHOT.jar:/c/Users/e1058/.m2/repository/org/apache/avro/avro/1.8.2/avro-1.8.2.jar:/c/Users/e1058/.m2/repository/org/codehaus/jackson/jackson-core-asl/1.9.13/jackson-core-asl-1.9.13.jar:/c/Users/e1058/.m2/repository/org/codehaus/jackson/jackson-mapper-asl/1.9.13/jackson-mapper-asl-1.9.13.jar:/c/Users/e1058/.m2/repository/org/slf4j/slf4j-api/1.7.9/slf4j-api-1.7.9.jar:/c/Users/e1058/.m2/repository/com/esotericsoftware/kryo-shaded/4.0.2/kryo-shaded-4.0.2.jar:/c/Users/e1058/.m2/repository/org/objenesis/objenesis/2.6/objenesis-2.6.jar:/c/Users/e1058/.m2/repository/com/esotericsoftware/minlog/1.3.0/minlog-1.3.0.jar:/c/Users/e1058/.m2/repository/log4j/log4j/1.2.17/log4j-1.2.17.jar:/c/Users/e1058/.m2/repository/org/apache/logging/log4j/log4j-1.2-api/2.6.2/log4j-1.2-api-2.6.2.jar" \
+  org.apache.hudi.common.model.GGPayload
