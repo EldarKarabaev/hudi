@@ -80,7 +80,7 @@ public class MergeGGPayload extends BaseAvroPayload
     if (recordBytes.length == 0) {
       return Option.empty();
     }
-    IndexedRecord indexedRecord = HoodieAvroUtils.bytesToAvro(myAvroBytes, schema);
+    IndexedRecord indexedRecord = HoodieAvroUtils.bytesToAvro(recordBytes, schema);
     if (isDeleteRecord((GenericRecord) indexedRecord)) {
       return Option.empty();
     } else {
@@ -90,6 +90,7 @@ public class MergeGGPayload extends BaseAvroPayload
       TreeMap<String, String> newValidityMap = new TreeMap<>();
       newValidityMap.put("pos: ", origPosString);
       ((GenericRecord) indexedRecord).put(GG_VALIDITY_MAP_COLUMN_NAME, newValidityMap);
+      //((Map)((GenericRecord) indexedRecord).get(GG_DATA_MAP_COLUMN_NAME)).put("DIRECT_PUT","VALUE");
       return Option.of(indexedRecord);
     }
   }
