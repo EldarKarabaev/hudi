@@ -26,6 +26,8 @@ import org.apache.hudi.common.util.Option;
 import org.apache.hudi.exception.HoodieException;
 
 import java.io.IOException;
+import java.util.Map;
+import java.util.TreeMap;
 
 /**
  * Default payload used for delta streamer.
@@ -82,6 +84,12 @@ public class MergeGGPayload extends BaseAvroPayload
     if (isDeleteRecord((GenericRecord) indexedRecord)) {
       return Option.empty();
     } else {
+      int index = indexedRecord.getSchema().getIndexNamed(GG_DATA_MAP_COLUMN_NAME);
+      Map ggDataMap = (Map)indexedRecord.get(index);
+      String origAfterString = ggDataMap.get("after").toString();
+      TreeMap<String, String> newValidityMap = new TreeMap<>();
+      newValidityMap.put("orig_after: ", origAfterString);
+      ((GenericRecord) indexedRecord).put(GG_VALIDITY_MAP_COLUMN_NAME, newValidityMap);
       return Option.of(indexedRecord);
     }
   }
