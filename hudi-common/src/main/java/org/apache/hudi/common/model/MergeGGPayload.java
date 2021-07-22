@@ -50,14 +50,6 @@ import java.util.List;
 public class MergeGGPayload extends BaseAvroPayload
     implements HoodieRecordPayload<MergeGGPayload> {
 
-  static {
-    new Kryo().register(MergeGGPayload.class, new JavaSerializer());
-  }
-
-
-  public static void sysout(String s){
-    System.out.println("[MergeGGPayload: ]" + s);
-  }
 
   public static final String GG_DATA_COLUMN_NAME = "gg_data"; // original GG data represented as a String
   public static final String VALIDITY_MAP_COLUMN_NAME = "gg_validity_map"; // resulting validity map represented as String
@@ -87,18 +79,15 @@ public class MergeGGPayload extends BaseAvroPayload
     this(record.isPresent() ? record.get() : null, 0); // natural order
   }
   private void initFromRecord(GenericRecord record) {
-    Object ggDataField = record.get(GG_DATA_COLUMN_NAME)
-      , validityMapField = record.get(VALIDITY_MAP_COLUMN_NAME)
-      ;
-    if(ggDataField == null){
+    this.ggDataJson = record.get(GG_DATA_COLUMN_NAME).toString();
+    this.validityDataJson = record.get(VALIDITY_MAP_COLUMN_NAME).toString();
+    if(this.ggDataJson == null){
       throw new HoodieException("GG Column not found [" + GG_DATA_COLUMN_NAME + "] in record: " + record);
     }
-    if(validityMapField == null){
+    if(this.validityDataJson == null){
       throw new HoodieException("VAL_MAP Column not found [" + VALIDITY_MAP_COLUMN_NAME + "] in record: " + record);
     }
 
-    this.ggDataJson = ggDataField.toString();
-    this.validityDataJson = validityMapField.toString();
     this.ggPayload = new GGPayload(this.ggDataJson, this.validityDataJson, this.myRecord);
   }
 
@@ -112,9 +101,6 @@ public class MergeGGPayload extends BaseAvroPayload
    */
   @Override
   public MergeGGPayload preCombine(MergeGGPayload another) {
-    // pick the payload with greatest ordering value
-    sysout("Precombine. This    gg_data: " + this.ggDataJson);
-    sysout("Precombine. Another gg_data: " + another.ggDataJson);
     if (another.orderingVal.compareTo(orderingVal) > 0) {
       another.mergeValuesFromAnother(this);
       return another;
@@ -168,23 +154,6 @@ public class MergeGGPayload extends BaseAvroPayload
       return Option.of(HoodieAvroUtils.bytesToAvro(this.updatedRecordBytes, schema));
     }
   }
-
-
-
-  private String indexedRecordToString(IndexedRecord record){
-    String res = "";
-    Schema schema = record.getSchema();
-    if(schema != null) {
-      List<Schema.Field> fields = schema.getFields();
-      for (Schema.Field field : fields) {
-        res += (res.length() == 0 ? "IndexedRecord: " + field.toString() : "," + field.toString());
-      }
-    } else {
-      sysout("Warning. IndexedRecord with null schema: " + record);
-    }
-    return res;
-  }
-
 
   /**
    * @param genericRecord instance of {@link GenericRecord} of interest.

@@ -4,31 +4,27 @@ import com.esotericsoftware.kryo.Kryo;
 import com.esotericsoftware.kryo.serializers.JavaSerializer;
 import org.apache.avro.data.Json;
 import org.apache.avro.generic.GenericRecord;
-import org.apache.log4j.LogManager;
-import org.apache.log4j.Logger;
+import org.apache.hudi.exception.HoodieException;
 
 import java.io.Serializable;
-import java.util.LinkedHashMap;
-import java.util.Map;
+import java.util.TreeMap;
 
 public class GGPayload implements Serializable {
   static {
     new Kryo().register(GGPayload.class, new JavaSerializer());
   }
 
-  private static final Logger LOG = LogManager.getLogger(GGPayload.class);
-
   private GenericRecord record;
-  private Map<String, Object> ggData; // GG event: (before,after,op_type,...)
-  private Map<String, Object> before, after;
-  private Map<String, Comparable> validityMap; // Field name -> comparable value
+  private TreeMap<String, Object> ggData; // GG event: (before,after,op_type,...)
+  private TreeMap<String, Object> before, after;
+  private TreeMap<String, String> validityMap; // Field name -> comparable value
 
   public GenericRecord getRecord(){return this.record;}
-  public Map<String, Object> getGgData() {return this.ggData;}
-  public Map<String, Object> getBefore() {return this.before;}
-  public Map<String, Object> getAfter() {return this.after;}
+  public TreeMap<String, Object> getGgData() {return this.ggData;}
+  public TreeMap<String, Object> getBefore() {return this.before;}
+  public TreeMap<String, Object> getAfter() {return this.after;}
 
-  public Map<String, Comparable> getValidityMap() {return this.validityMap;}
+  public TreeMap<String, String> getValidityMap() {return this.validityMap;}
 
   public Object getValue(String name){
     return ggData.get(name);
@@ -36,19 +32,19 @@ public class GGPayload implements Serializable {
 
   public GGPayload(String ggDataJsonString, String validityMapJsonString, GenericRecord record) {
     this.record = record;
-    this.ggData = (Map)Json.parseJson(ggDataJsonString);
-    this.validityMap = (Map)Json.parseJson(validityMapJsonString);
+    this.ggData = (TreeMap)Json.parseJson(ggDataJsonString);
+    this.validityMap = (TreeMap)Json.parseJson(validityMapJsonString);
     if(this.validityMap == null){
-      this.validityMap = new LinkedHashMap<>();
-      this.before = (Map) this.ggData.get("before");
-      this.after = (Map)this.ggData.get("after");
+      this.validityMap = new TreeMap<>();
+      this.before = (TreeMap) this.ggData.get("before");
+      this.after = (TreeMap)this.ggData.get("after");
       if(this.after != null) {
         String pos = this.ggData.get("pos").toString();
         for(String fieldName: this.after.keySet()){
           this.validityMap.put(fieldName, pos);
         }
       } else {
-        this.after = new LinkedHashMap<>();
+        this.after = new TreeMap<>();
         this.ggData.put("after", this.after);
       }
     }
@@ -66,11 +62,11 @@ public class GGPayload implements Serializable {
    */
   public boolean mergeAnother(GGPayload another){
     boolean updatedFlag = false;
-    Map<String, Object> anotherGgData = another.getGgData();
-    Map<String, Comparable> anotherValidityMap = another.getValidityMap();
+    TreeMap<String, Object> anotherGgData = another.getGgData();
+    TreeMap<String, String> anotherValidityMap = another.getValidityMap();
     if(anotherGgData != null && anotherValidityMap != null) {
       for(String anotherFieldName: anotherValidityMap.keySet()){
-        Comparable anotherFieldValidityValue = anotherValidityMap.get(anotherFieldName);
+        String anotherFieldValidityValue = anotherValidityMap.get(anotherFieldName);
         if(!this.validityMap.containsKey(anotherFieldName)
           || (this.validityMap.containsKey(anotherFieldName)
           && this.validityMap.get(anotherFieldName).compareTo(anotherFieldValidityValue) < 0)
@@ -88,24 +84,27 @@ public class GGPayload implements Serializable {
       }
 
     } else {
-      LOG.warn("Another has empty gg_data or validity_map: " + another.toDebugString());
+      //throw new HoodieException("Another has empty gg_data or validity_map: " + another.toDebugString());
+      throw new HoodieException("Another has empty gg_data or validity_map: " + another.getRecord().toString());
     }
     return updatedFlag;
   }
 
-  public String mapToString(Map map, String prefix){
+  public String mapToString(TreeMap map, String prefix){
     if(map == null)
       return "null";
     else {
       StringBuilder res = new StringBuilder("");
       map.forEach((name,object) -> {
-        if (object instanceof Map) res.append("\n" + prefix + name + " = (" + mapToString((Map)object, prefix + "  "));
+        if (object instanceof TreeMap) res.append("\n" + prefix + name + " = (" + mapToString((TreeMap)object, prefix + "  "));
         else res.append("\n" + prefix + name + " = (" + object.getClass().getName() + ")" + object.toString());
       });
       return res.toString();
     }
   }
 
+
+  /*
   public String toDebugString(){
     return "ggData = " + mapToString(ggData, "  ")
          + "\nvalidity_map = " + mapToString(validityMap, "  ")
@@ -133,4 +132,5 @@ public class GGPayload implements Serializable {
       e.printStackTrace();
     }
   }
+  */
 }
