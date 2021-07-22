@@ -40,20 +40,29 @@ import java.util.TreeMap;
 public class MergeGGPayload extends BaseAvroPayload
     implements HoodieRecordPayload<MergeGGPayload> {
 
-  public final String GG_DATA_MAP_COLUMN_NAME = "_gg_data_map";
-  public final String GG_VALIDITY_MAP_COLUMN_NAME = "_gg_validity_map";
+  public static final String GG_DATA_MAP_COLUMN_NAME = "_gg_data_map";
+  public static final String GG_VALIDITY_MAP_COLUMN_NAME = "_gg_validity_map";
+  public static final String OP_TS_COLUMN_NAME = "op_ts";
 
   private byte[] myAvroBytes;
 
   public MergeGGPayload(GenericRecord record, Comparable orderingVal) {
     super(record, orderingVal);
-    if(record.get(GG_DATA_MAP_COLUMN_NAME) == null){
-      throw new HoodieException("Column not found: " + GG_DATA_MAP_COLUMN_NAME + " in " + record);
+    if(record == null){
+      myAvroBytes = new byte[0];
+    } else {
+      if(record.get(GG_DATA_MAP_COLUMN_NAME) == null){
+        throw new HoodieException("Column not found: " + GG_DATA_MAP_COLUMN_NAME + " in " + record);
+      } else {
+        if(((Map)record.get(GG_DATA_MAP_COLUMN_NAME)).get(OP_TS_COLUMN_NAME) == null){
+          throw new HoodieException("Column not found: " + GG_DATA_MAP_COLUMN_NAME + "." + OP_TS_COLUMN_NAME + " in " + record);
+        }
+      }
+      if(record.get(GG_VALIDITY_MAP_COLUMN_NAME) == null){
+        throw new HoodieException("Column not found: " + GG_VALIDITY_MAP_COLUMN_NAME + " in " + record);
+      }
+      myAvroBytes = HoodieAvroUtils.avroToBytes(record);
     }
-    if(record.get(GG_VALIDITY_MAP_COLUMN_NAME) == null){
-      throw new HoodieException("Column not found: " + GG_VALIDITY_MAP_COLUMN_NAME + " in " + record);
-    }
-    myAvroBytes = record != null ? HoodieAvroUtils.avroToBytes(record) : new byte[0];
   }
 
   public MergeGGPayload(Option<GenericRecord> record) {
@@ -94,14 +103,14 @@ public class MergeGGPayload extends BaseAvroPayload
 
       //((Map)((GenericRecord) indexedRecord).get(GG_DATA_MAP_COLUMN_NAME))
       //  .put("ValMapClass",valMapClassName);
-      Map ggDataMap = ((Map)((GenericRecord) indexedRecord).get(GG_DATA_MAP_COLUMN_NAME));
+      Map ggDataMap = (Map)((GenericRecord) indexedRecord).get(GG_DATA_MAP_COLUMN_NAME);
       ggDataMap.put("record",indexedRecord.toString());
       ggDataMap.put("recordClass",indexedRecord.getClass().getCanonicalName());
       Object valMap = ((GenericRecord) indexedRecord).get(GG_VALIDITY_MAP_COLUMN_NAME);
       if(valMap == null){
         ggDataMap.put("valMap","null");
       } else {
-        ggDataMap.put("valClass",valMap.getClass().getCanonicalName());
+        ggDataMap.put("valMapClass",valMap.getClass().getCanonicalName());
         ggDataMap.put("valMap",valMap.toString());
       }
       ((GenericRecord) indexedRecord).put("feld","recordBytes:" + recordBytes.length + ", myAvroBytes:" + myAvroBytes.length);
