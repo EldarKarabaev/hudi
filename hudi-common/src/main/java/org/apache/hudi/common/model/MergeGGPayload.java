@@ -99,7 +99,7 @@ public class MergeGGPayload extends BaseAvroPayload
       if(ggDataMap != null) {
         for (Object key : ggDataMap.keySet()) {
           Object value = ggDataMap.get(key);
-          ggDataMapContents = (ggDataMapContents.length() == 0?"":",")
+          ggDataMapContents = ggDataMapContents + (ggDataMapContents.length() == 0?"":",")
             + key.toString()
             + ": " + (value==null?"null":"(" + value.getClass().getCanonicalName() + ")" + value.toString());
         }
