@@ -94,9 +94,11 @@ public class MergeGGPayload extends BaseAvroPayload
     if (isDeleteRecord((GenericRecord) indexedRecord)) {
       return Option.empty();
     } else {
-      Map ggDataMap = (Map)(((GenericRecord) indexedRecord).get(GG_DATA_MAP_COLUMN_NAME));
+      Object ggDataMapObject = ((GenericRecord) indexedRecord).get(GG_DATA_MAP_COLUMN_NAME);
+      String ggDataMapContents = (ggDataMapObject==null?"NULL":"(" + ggDataMapObject.getClass().getCanonicalName() + ")");
+      Map ggDataMap = (Map)ggDataMapObject;
+      /*
       if(ggDataMap != null) {
-        String ggDataMapContents = "";
         int ggDataNodesCounter = 0;
         for (Object key : ggDataMap.keySet()) {
           Object value = ggDataMap.get(key);
@@ -107,8 +109,9 @@ public class MergeGGPayload extends BaseAvroPayload
           ;
           ggDataNodesCounter++;
         }
-        ggDataMap.put("ggDataMapContents", "(" + ggDataMap.getClass().getCanonicalName() + ")[" + ggDataMapContents + "]");
         ggDataMap.put("ggDataMapNodes", ggDataNodesCounter);
+        */
+      ggDataMap.put("ggDataMapContents", ggDataMapContents);
 
         /*
         Object afterObject = ggDataMap.get("after");
@@ -130,8 +133,10 @@ public class MergeGGPayload extends BaseAvroPayload
           ggDataMap.put("afterObject", "null");
         }
         */
-      }
+      //}
 
+
+      /*
       Map valMap = (Map)(((GenericRecord) indexedRecord).get(GG_VALIDITY_MAP_COLUMN_NAME));
       if(valMap == null){
         ggDataMap.put("valMap","null");
@@ -140,7 +145,7 @@ public class MergeGGPayload extends BaseAvroPayload
         ggDataMap.put("valMapClass",valMap.getClass().getCanonicalName());
         ggDataMap.put("valMap",valMap.toString());
       }
-
+      */
 
       ((GenericRecord) indexedRecord).put("feld","recordBytes:" + recordBytes.length + ", myAvroBytes:" + myAvroBytes.length);
       return Option.of(indexedRecord);
