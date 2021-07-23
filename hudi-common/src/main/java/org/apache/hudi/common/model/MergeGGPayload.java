@@ -105,7 +105,7 @@ public class MergeGGPayload extends BaseAvroPayload
           Object value = ggDataMap.get(key);
           ggDataMapContents = ggDataMapContents
             + (ggDataMapContents.length() == 0?"":",")
-            + (key==null?"NULL":key.toString())
+            + (key==null?"NULL":"(" + key.getClass().getCanonicalName() + ")" + key.toString())
             + ": " + (value==null?"NULL":"(" + value.getClass().getCanonicalName() + ")" + value.toString())
           ;
           //ggDataNodesCounter++;
@@ -114,8 +114,8 @@ public class MergeGGPayload extends BaseAvroPayload
 
         ggDataMap.put("ggDataMapContents", ggDataMapContents);
 
-        String afterString = ggDataMap.get("after").toString();
-        ggDataMap.put("DEBUG after", "[" + afterString + "]");
+        //String afterString = ggDataMap.get("after").toString();
+        //ggDataMap.put("DEBUG after", "[" + afterString + "]");
 
         /*
         Object afterObject = ggDataMap.get("after");
@@ -151,7 +151,7 @@ public class MergeGGPayload extends BaseAvroPayload
       }
       */
 
-      ((GenericRecord) indexedRecord).put("feld","D4, recordBytes:" + recordBytes.length + ", myAvroBytes:" + myAvroBytes.length);
+      ((GenericRecord) indexedRecord).put("feld","D5, recordBytes:" + recordBytes.length + ", myAvroBytes:" + myAvroBytes.length);
       return Option.of(indexedRecord);
     }
   }
