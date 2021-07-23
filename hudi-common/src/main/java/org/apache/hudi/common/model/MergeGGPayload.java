@@ -156,7 +156,7 @@ public class MergeGGPayload extends BaseAvroPayload
           if(needCopy){
             // 1. Copy the data field value
             step = "07";
-            myRecord.put(fieldName.toString(), another.get(fieldName.toString()));
+            myRecord.put(fieldName.toString().toLowerCase(), another.get(fieldName.toString().toLowerCase()));
             // 2. Copy the validityTs
             step = "08";
             myValidityMap.put(fieldName, anotherValidityMap.get(fieldName));
