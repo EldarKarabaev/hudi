@@ -98,20 +98,20 @@ public class MergeGGPayload extends BaseAvroPayload
       Object ggDataMapObject = ((GenericRecord) indexedRecord).get(GG_DATA_MAP_COLUMN_NAME);
       String ggDataMapContents = (ggDataMapObject==null?"NULL":"(" + ggDataMapObject.getClass().getCanonicalName() + ")");
       Map ggDataMap = (Map)ggDataMapObject;
-      /*
+
       if(ggDataMap != null) {
-        int ggDataNodesCounter = 0;
+        //int ggDataNodesCounter = 0;
         for (Object key : ggDataMap.keySet()) {
           Object value = ggDataMap.get(key);
           ggDataMapContents = ggDataMapContents
             + (ggDataMapContents.length() == 0?"":",")
-            + (key==null?"null":key.toString())
-          //  + ": " + (value==null?"null":"(" + value.getClass().getCanonicalName() + ")" + value.toString())
+            + (key==null?"NULL":key.toString())
+            + ": " + (value==null?"NULL":"(" + value.getClass().getCanonicalName() + ")" + value.toString())
           ;
-          ggDataNodesCounter++;
+          //ggDataNodesCounter++;
         }
-        ggDataMap.put("ggDataMapNodes", ggDataNodesCounter);
-        */
+        //ggDataMap.put("ggDataMapNodes", ggDataNodesCounter);
+
       ggDataMap.put("ggDataMapContents", ggDataMapContents);
 
         /*
@@ -134,7 +134,7 @@ public class MergeGGPayload extends BaseAvroPayload
           ggDataMap.put("afterObject", "null");
         }
         */
-      //}
+      }
 
 
       /*
@@ -148,7 +148,7 @@ public class MergeGGPayload extends BaseAvroPayload
       }
       */
 
-      ((GenericRecord) indexedRecord).put("feld","D2, recordBytes:" + recordBytes.length + ", myAvroBytes:" + myAvroBytes.length);
+      ((GenericRecord) indexedRecord).put("feld","D3, recordBytes:" + recordBytes.length + ", myAvroBytes:" + myAvroBytes.length);
       return Option.of(indexedRecord);
     }
   }
