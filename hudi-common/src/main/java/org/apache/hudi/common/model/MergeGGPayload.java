@@ -30,7 +30,6 @@ import org.apache.hudi.exception.HoodieException;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.TreeMap;
 
 /**
  * Default payload used for delta streamer.
@@ -51,7 +50,8 @@ public class MergeGGPayload extends BaseAvroPayload
 
   private byte[] myAvroBytes;
   public byte[] getAvroBytes(){return myAvroBytes;}
-  private Schema schema;
+  private String schemaString;
+  //private Schema schema;
 
   public MergeGGPayload(GenericRecord record, Comparable orderingVal) {
     super(record, orderingVal);
@@ -66,7 +66,7 @@ public class MergeGGPayload extends BaseAvroPayload
       if(record.get(GG_VALIDITY_MAP_COLUMN_NAME) == null){
         throw new HoodieException("Column not found: " + GG_VALIDITY_MAP_COLUMN_NAME + " in " + record);
       }
-      this.schema = record.getSchema();
+      this.schemaString= record.getSchema().toString();
       // Create mutable record, modify and save in MyAvroBytes
       try {
         GenericRecord myRecord = HoodieAvroUtils.bytesToAvro(HoodieAvroUtils.avroToBytes(record), record.getSchema());
@@ -124,13 +124,14 @@ public class MergeGGPayload extends BaseAvroPayload
     if(another == null) {
       return;
     }
+
     // get another's validityMap
     Map anotherValidityMap = (Map)(another.get(GG_VALIDITY_MAP_COLUMN_NAME));
     // If it is not empty, then we merge more recent data from another
     if(anotherValidityMap != null && anotherValidityMap.keySet().size() > 0){
       // instantiate my GenericRecord
       try {
-        GenericRecord myRecord = HoodieAvroUtils.bytesToAvro(myAvroBytes, this.schema);
+        GenericRecord myRecord = HoodieAvroUtils.bytesToAvro(myAvroBytes, another.getSchema());
         // get my validityMap
         Map myValidityMap = (Map)(myRecord.get(GG_VALIDITY_MAP_COLUMN_NAME));
         for(Object fieldName: anotherValidityMap.keySet()){
@@ -154,10 +155,13 @@ public class MergeGGPayload extends BaseAvroPayload
         throw new HoodieException("Merge error 002: " + e.getMessage());
       }
     }
+
   }
 
-  public void mergeAnotherPayload(MergeGGPayload another, Schema schema){
+  public void mergeAnotherPayload(MergeGGPayload another){
     try {
+      Schema.Parser parser = new Schema.Parser();
+      Schema schema = parser.parse(this.schemaString);
       GenericRecord anotherRecord = HoodieAvroUtils.bytesToAvro(another.getAvroBytes(), schema);
       mergeAnotherRecord(anotherRecord);
     } catch (Exception e){
@@ -167,7 +171,7 @@ public class MergeGGPayload extends BaseAvroPayload
 
   @Override
   public MergeGGPayload preCombine(MergeGGPayload another) {
-    mergeAnotherPayload(another, this.schema);
+    mergeAnotherPayload(another);
     return this;
   }
 
