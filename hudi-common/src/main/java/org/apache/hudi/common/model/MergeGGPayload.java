@@ -121,7 +121,39 @@ public class MergeGGPayload extends BaseAvroPayload
    * Merges data from another record into this one according to validityMaps of both
    */
   public void mergeAnotherRecord(GenericRecord another){
-
+    if(another == null) {
+      return;
+    }
+    // get another's validityMap
+    Map anotherValidityMap = (Map)(another.get(GG_VALIDITY_MAP_COLUMN_NAME));
+    // If it is not empty, then we merge more recent data from another
+    if(anotherValidityMap != null && anotherValidityMap.keySet().size() > 0){
+      // instantiate my GenericRecord
+      try {
+        GenericRecord myRecord = HoodieAvroUtils.bytesToAvro(myAvroBytes, this.schema);
+        // get my validityMap
+        Map myValidityMap = (Map)(myRecord.get(GG_VALIDITY_MAP_COLUMN_NAME));
+        for(Object fieldName: anotherValidityMap.keySet()){
+          boolean needCopy = true;
+          String anotherValidityTs = anotherValidityMap.get(fieldName).toString();
+          if(myValidityMap.containsKey(fieldName)){
+            String myValidityTs = myValidityMap.get(fieldName).toString();
+            if(myValidityTs.compareTo(anotherValidityTs)>=0){
+              needCopy = false;
+            }
+          }
+          if(needCopy){
+            // 1. Copy the data field value
+            myRecord.put(fieldName.toString(), another.get(fieldName.toString()));
+            // 2. Copy the validityTs
+            myValidityMap.put(fieldName, anotherValidityMap.get(fieldName));
+          }
+        }
+        myAvroBytes = HoodieAvroUtils.avroToBytes(myRecord);
+      } catch (Exception e){
+        throw new HoodieException("Merge error 002: " + e.getMessage());
+      }
+    }
   }
 
   public void mergeAnotherPayload(MergeGGPayload another, Schema schema){
@@ -129,7 +161,7 @@ public class MergeGGPayload extends BaseAvroPayload
       GenericRecord anotherRecord = HoodieAvroUtils.bytesToAvro(another.getAvroBytes(), schema);
       mergeAnotherRecord(anotherRecord);
     } catch (Exception e){
-      throw new HoodieException("Merge error: " + e.getMessage());
+      throw new HoodieException("Merge error 001: " + e.getMessage());
     }
   }
 
