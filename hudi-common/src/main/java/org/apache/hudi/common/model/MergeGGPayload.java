@@ -118,13 +118,24 @@ public class MergeGGPayload extends BaseAvroPayload
         String afterString = ggDataMap.get(new Utf8("after")).toString();
         ggDataMap.put("afterString", "[" + afterString + "]");
 
-        try {
-          Object afterMap = Json.parseJson(afterString);
-          String afterMapContents = (afterMap==null?"null":"(" + afterMap.getClass().getCanonicalName() + ")" + afterMap);
-          ggDataMap.put("afterMapContents", afterMapContents);
-        } catch (Exception e){
-          ggDataMap.put("afterMap", "Error: " + e.getMessage());
+        Map afterMap = (Map)Json.parseJson(afterString);
+        String afterMapContents = "";
+        if(afterMap == null){
+          afterMapContents = "NULL";
+        } else {
+          for (Object key : afterMap.keySet()) {
+            Object value = afterMap.get(key);
+            afterMapContents = afterMapContents
+              + (afterMapContents.length() == 0?"":",")
+              + (key==null?"NULL":"(" + key.getClass().getCanonicalName() + ")" + key.toString())
+              + ": " + (value==null?"NULL":"(" + value.getClass().getCanonicalName() + ")" + value.toString())
+            ;
+            //ggDataNodesCounter++;
+          }
         }
+        ggDataMap.put("afterMapContents", afterMapContents);
+
+
 
         /*
         Object afterObject = ggDataMap.get("after");
@@ -160,7 +171,7 @@ public class MergeGGPayload extends BaseAvroPayload
       }
       */
 
-      ((GenericRecord) indexedRecord).put("feld","D7, recordBytes:" + recordBytes.length + ", myAvroBytes:" + myAvroBytes.length);
+      ((GenericRecord) indexedRecord).put("feld","D8, recordBytes:" + recordBytes.length + ", myAvroBytes:" + myAvroBytes.length);
       return Option.of(indexedRecord);
     }
   }
