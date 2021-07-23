@@ -130,29 +130,39 @@ public class MergeGGPayload extends BaseAvroPayload
     // If it is not empty, then we merge more recent data from another
     if(anotherValidityMap != null && anotherValidityMap.keySet().size() > 0){
       // instantiate my GenericRecord
+      String step = "";
       try {
+        step = "01";
         GenericRecord myRecord = HoodieAvroUtils.bytesToAvro(myAvroBytes, another.getSchema());
         // get my validityMap
+        step = "02";
         Map myValidityMap = (Map)(myRecord.get(GG_VALIDITY_MAP_COLUMN_NAME));
         for(Object fieldName: anotherValidityMap.keySet()){
           boolean needCopy = true;
+          step = "03";
           String anotherValidityTs = anotherValidityMap.get(fieldName).toString();
+          step = "04";
           if(myValidityMap.containsKey(fieldName)){
+            step = "05";
             String myValidityTs = myValidityMap.get(fieldName).toString();
+            step = "06";
             if(myValidityTs.compareTo(anotherValidityTs)>=0){
               needCopy = false;
             }
           }
           if(needCopy){
             // 1. Copy the data field value
+            step = "07";
             myRecord.put(fieldName.toString(), another.get(fieldName.toString()));
             // 2. Copy the validityTs
+            step = "08";
             myValidityMap.put(fieldName, anotherValidityMap.get(fieldName));
           }
         }
+        step = "09";
         myAvroBytes = HoodieAvroUtils.avroToBytes(myRecord);
       } catch (Exception e){
-        throw new HoodieException("Merge error 002: " + e.getMessage());
+        throw new HoodieException("Merge error 002[" + step + "]: " + e.getMessage());
       }
     }
 
