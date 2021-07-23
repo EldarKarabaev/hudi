@@ -22,6 +22,7 @@ import org.apache.avro.Schema;
 import org.apache.avro.data.Json;
 import org.apache.avro.generic.GenericRecord;
 import org.apache.avro.generic.IndexedRecord;
+import org.apache.avro.util.Utf8;
 import org.apache.hudi.avro.HoodieAvroUtils;
 import org.apache.hudi.common.util.Option;
 import org.apache.hudi.exception.HoodieException;
@@ -114,8 +115,8 @@ public class MergeGGPayload extends BaseAvroPayload
 
         ggDataMap.put("ggDataMapContents", ggDataMapContents);
 
-        //String afterString = ggDataMap.get("after").toString();
-        //ggDataMap.put("DEBUG after", "[" + afterString + "]");
+        String afterString = ggDataMap.get(new Utf8("after")).toString();
+        ggDataMap.put("afterString", "[" + afterString + "]");
 
         /*
         Object afterObject = ggDataMap.get("after");
@@ -151,7 +152,7 @@ public class MergeGGPayload extends BaseAvroPayload
       }
       */
 
-      ((GenericRecord) indexedRecord).put("feld","D5, recordBytes:" + recordBytes.length + ", myAvroBytes:" + myAvroBytes.length);
+      ((GenericRecord) indexedRecord).put("feld","D6, recordBytes:" + recordBytes.length + ", myAvroBytes:" + myAvroBytes.length);
       return Option.of(indexedRecord);
     }
   }
