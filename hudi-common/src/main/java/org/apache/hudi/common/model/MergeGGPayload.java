@@ -100,9 +100,11 @@ public class MergeGGPayload extends BaseAvroPayload
         int ggDataNodesCounter = 0;
         for (Object key : ggDataMap.keySet()) {
           Object value = ggDataMap.get(key);
-          ggDataMapContents = ggDataMapContents + (ggDataMapContents.length() == 0?"":",")
-            + key.toString()
-            + ": " + (value==null?"null":"(" + value.getClass().getCanonicalName() + ")" + value.toString());
+          ggDataMapContents = ggDataMapContents
+            + (ggDataMapContents.length() == 0?"":",")
+            + (key==null?"null":key.toString())
+          //  + ": " + (value==null?"null":"(" + value.getClass().getCanonicalName() + ")" + value.toString())
+          ;
           ggDataNodesCounter++;
         }
         ggDataMap.put("ggDataMapContents", "(" + ggDataMap.getClass().getCanonicalName() + ")[" + ggDataMapContents + "]");
