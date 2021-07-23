@@ -132,8 +132,11 @@ public class MergeGGPayload extends BaseAvroPayload
       // instantiate my GenericRecord
       String step = "";
       try {
-        step = "01";
-        GenericRecord myRecord = HoodieAvroUtils.bytesToAvro(myAvroBytes, another.getSchema());
+        step = "01a";
+        Schema.Parser parser = new Schema.Parser();
+        Schema schema = parser.parse(this.schemaString);
+        step="01b";
+        GenericRecord myRecord = HoodieAvroUtils.bytesToAvro(myAvroBytes, schema);
         // get my validityMap
         step = "02";
         Map myValidityMap = (Map)(myRecord.get(GG_VALIDITY_MAP_COLUMN_NAME));
@@ -162,7 +165,7 @@ public class MergeGGPayload extends BaseAvroPayload
         step = "09";
         myAvroBytes = HoodieAvroUtils.avroToBytes(myRecord);
       } catch (Exception e){
-        throw new HoodieException("Merge error 002[" + step + "]: " + e.getMessage());
+        throw new HoodieException("Merge error 002[" + step + "]: " + e.getMessage(), e);
       }
     }
 
