@@ -112,7 +112,10 @@ public class MergeGGPayload extends BaseAvroPayload
         }
         //ggDataMap.put("ggDataMapNodes", ggDataNodesCounter);
 
-      ggDataMap.put("ggDataMapContents", ggDataMapContents);
+        ggDataMap.put("ggDataMapContents", ggDataMapContents);
+
+        String afterString = ggDataMap.get("after").toString();
+        ggDataMap.put("DEBUG after", "[" + afterString + "]");
 
         /*
         Object afterObject = ggDataMap.get("after");
@@ -148,7 +151,7 @@ public class MergeGGPayload extends BaseAvroPayload
       }
       */
 
-      ((GenericRecord) indexedRecord).put("feld","D3, recordBytes:" + recordBytes.length + ", myAvroBytes:" + myAvroBytes.length);
+      ((GenericRecord) indexedRecord).put("feld","D4, recordBytes:" + recordBytes.length + ", myAvroBytes:" + myAvroBytes.length);
       return Option.of(indexedRecord);
     }
   }
