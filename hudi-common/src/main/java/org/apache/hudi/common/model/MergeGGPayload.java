@@ -95,16 +95,18 @@ public class MergeGGPayload extends BaseAvroPayload
       return Option.empty();
     } else {
       Map ggDataMap = (Map)(((GenericRecord) indexedRecord).get(GG_DATA_MAP_COLUMN_NAME));
-      String ggDataMapContents = "";
       if(ggDataMap != null) {
+        String ggDataMapContents = "";
+        int ggDataNodesCounter = 0;
         for (Object key : ggDataMap.keySet()) {
           Object value = ggDataMap.get(key);
           ggDataMapContents = ggDataMapContents + (ggDataMapContents.length() == 0?"":",")
             + key.toString()
             + ": " + (value==null?"null":"(" + value.getClass().getCanonicalName() + ")" + value.toString());
+          ggDataNodesCounter++;
         }
-        ggDataMap.put("ggDataMapContents", "(" + ggDataMap.getClass().getCanonicalName() + "){" + ggDataMapContents + "}");
-
+        ggDataMap.put("ggDataMapContents", "(" + ggDataMap.getClass().getCanonicalName() + ")[" + ggDataMapContents + "]");
+        ggDataMap.put("ggDataMapNodes", ggDataNodesCounter);
 
         /*
         Object afterObject = ggDataMap.get("after");
