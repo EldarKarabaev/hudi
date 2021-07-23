@@ -28,6 +28,7 @@ import org.apache.hudi.common.util.Option;
 import org.apache.hudi.exception.HoodieException;
 
 import java.io.IOException;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.TreeMap;
 
@@ -46,6 +47,8 @@ public class MergeGGPayload extends BaseAvroPayload
   public static final String GG_VALIDITY_MAP_COLUMN_NAME = "_gg_validity_map";
   public static final String OP_TS_COLUMN_NAME = "op_ts";
 
+  public static final Utf8 OP_TS_COLUMN_NAME_UTF8 = new Utf8(OP_TS_COLUMN_NAME);
+
   private byte[] myAvroBytes;
 
   public MergeGGPayload(GenericRecord record, Comparable orderingVal) {
@@ -53,17 +56,58 @@ public class MergeGGPayload extends BaseAvroPayload
     if(record == null){
       myAvroBytes = new byte[0];
     } else {
+      // Check _gg_data_map column exists
       if(record.get(GG_DATA_MAP_COLUMN_NAME) == null){
         throw new HoodieException("Column not found: " + GG_DATA_MAP_COLUMN_NAME + " in " + record);
-      } else {
-        if(((Map)record.get(GG_DATA_MAP_COLUMN_NAME)).get(OP_TS_COLUMN_NAME) == null){
-          throw new HoodieException("Column not found: " + GG_DATA_MAP_COLUMN_NAME + "." + OP_TS_COLUMN_NAME + " in " + record);
-        }
       }
+      // Check _gg_validity_map column exists
       if(record.get(GG_VALIDITY_MAP_COLUMN_NAME) == null){
         throw new HoodieException("Column not found: " + GG_VALIDITY_MAP_COLUMN_NAME + " in " + record);
       }
-      myAvroBytes = HoodieAvroUtils.avroToBytes(record);
+
+      // Create mutable record, modify and save in MyAvroBytes
+      try {
+        GenericRecord myRecord = HoodieAvroUtils.bytesToAvro(HoodieAvroUtils.avroToBytes(record), record.getSchema());
+        // Open gg_data map
+        Object ggDataMapObject = myRecord.get(GG_DATA_MAP_COLUMN_NAME);
+        Map ggDataMap = (Map)ggDataMapObject;
+        // Get op_ts as a string and Utf8
+        Object opTsObject = ggDataMap.get(OP_TS_COLUMN_NAME_UTF8);
+        if(opTsObject == null){
+          throw new HoodieException("Field not found or null: " + GG_DATA_MAP_COLUMN_NAME + "." + OP_TS_COLUMN_NAME);
+        }
+        String opTsString = opTsObject.toString();
+        Utf8 opTsUtf8 = new Utf8(opTsString);
+        // Open existing validity_map or create new one
+        Object validityMapObject = myRecord.get(GG_VALIDITY_MAP_COLUMN_NAME);
+        Map validityMap;
+        if(validityMapObject == null){
+          validityMap = new HashMap();
+        } else {
+          validityMap = (Map) validityMapObject;
+        }
+        // Open "after"
+        String afterString = ggDataMap.get(new Utf8("after")).toString();
+        Map afterMap = (Map)Json.parseJson(afterString);
+        // Actualize validityMap
+        if(afterMap != null){
+          for (Object key : afterMap.keySet()) {
+            Utf8 fieldName = new Utf8(key.toString());
+            Object currentValidityObject = validityMap.get(fieldName);
+            String currentValidityString = null;
+            if(currentValidityObject != null){
+              currentValidityString = currentValidityObject.toString();
+            }
+            if(currentValidityString == null || currentValidityString.length() == 0 || opTsString.compareTo(currentValidityString) > 0){
+              validityMap.put(key, opTsUtf8);
+            }
+          }
+        }
+        myRecord.put(GG_VALIDITY_MAP_COLUMN_NAME, validityMap);
+        myAvroBytes = HoodieAvroUtils.avroToBytes(myRecord);
+      } catch (Exception e){
+        throw new HoodieException("Cannot initialize record:" + e.getMessage());
+      }
     }
   }
 
@@ -171,7 +215,7 @@ public class MergeGGPayload extends BaseAvroPayload
       }
       */
 
-      ((GenericRecord) indexedRecord).put("feld","D8, recordBytes:" + recordBytes.length + ", myAvroBytes:" + myAvroBytes.length);
+      ((GenericRecord) indexedRecord).put("feld","D9, recordBytes:" + recordBytes.length + ", myAvroBytes:" + myAvroBytes.length);
       return Option.of(indexedRecord);
     }
   }
