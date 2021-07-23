@@ -50,6 +50,8 @@ public class MergeGGPayload extends BaseAvroPayload
   public static final Utf8 OP_TS_COLUMN_NAME_UTF8 = new Utf8(OP_TS_COLUMN_NAME);
 
   private byte[] myAvroBytes;
+  public byte[] getAvroBytes(){return myAvroBytes;}
+  private Schema schema;
 
   public MergeGGPayload(GenericRecord record, Comparable orderingVal) {
     super(record, orderingVal);
@@ -64,7 +66,7 @@ public class MergeGGPayload extends BaseAvroPayload
       if(record.get(GG_VALIDITY_MAP_COLUMN_NAME) == null){
         throw new HoodieException("Column not found: " + GG_VALIDITY_MAP_COLUMN_NAME + " in " + record);
       }
-
+      this.schema = record.getSchema();
       // Create mutable record, modify and save in MyAvroBytes
       try {
         GenericRecord myRecord = HoodieAvroUtils.bytesToAvro(HoodieAvroUtils.avroToBytes(record), record.getSchema());
@@ -115,18 +117,31 @@ public class MergeGGPayload extends BaseAvroPayload
     this(record.isPresent() ? record.get() : null, 0); // natural order
   }
 
-  @Override
-  public MergeGGPayload preCombine(MergeGGPayload another) {
-    // pick the payload with greatest ordering value
-    if (another.orderingVal.compareTo(orderingVal) > 0) {
-      return another;
-    } else {
-      return this;
+  /*
+   * Merges data from another record into this one according to validityMaps of both
+   */
+  public void mergeAnotherRecord(GenericRecord another){
+
+  }
+
+  public void mergeAnotherPayload(MergeGGPayload another, Schema schema){
+    try {
+      GenericRecord anotherRecord = HoodieAvroUtils.bytesToAvro(another.getAvroBytes(), schema);
+      mergeAnotherRecord(anotherRecord);
+    } catch (Exception e){
+      throw new HoodieException("Merge error: " + e.getMessage());
     }
   }
 
   @Override
+  public MergeGGPayload preCombine(MergeGGPayload another) {
+    mergeAnotherPayload(another, this.schema);
+    return this;
+  }
+
+  @Override
   public Option<IndexedRecord> combineAndGetUpdateValue(IndexedRecord currentValue, Schema schema) throws IOException {
+    mergeAnotherRecord((GenericRecord)currentValue);
     return getInsertValue(schema);
   }
 
@@ -215,7 +230,7 @@ public class MergeGGPayload extends BaseAvroPayload
       }
       */
 
-      ((GenericRecord) indexedRecord).put("feld","D9, recordBytes:" + recordBytes.length + ", myAvroBytes:" + myAvroBytes.length);
+      ((GenericRecord) indexedRecord).put("feld","D10, recordBytes:" + recordBytes.length + ", myAvroBytes:" + myAvroBytes.length);
       return Option.of(indexedRecord);
     }
   }
