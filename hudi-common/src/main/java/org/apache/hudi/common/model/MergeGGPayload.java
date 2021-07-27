@@ -108,7 +108,7 @@ public class MergeGGPayload extends BaseAvroPayload
         myRecord.put(GG_VALIDITY_MAP_COLUMN_NAME, validityMap);
         myAvroBytes = HoodieAvroUtils.avroToBytes(myRecord);
       } catch (Exception e){
-        throw new HoodieException("Cannot initialize record:" + e.getMessage());
+        throw new HoodieException("Cannot initialize record:" + e.getMessage(), e);
       }
     }
   }
@@ -178,7 +178,7 @@ public class MergeGGPayload extends BaseAvroPayload
       GenericRecord anotherRecord = HoodieAvroUtils.bytesToAvro(another.getAvroBytes(), schema);
       mergeAnotherRecord(anotherRecord);
     } catch (Exception e){
-      throw new HoodieException("Merge error 001: " + e.getMessage());
+      throw new HoodieException("Merge error 001: " + e.getMessage(), e);
     }
   }
 
