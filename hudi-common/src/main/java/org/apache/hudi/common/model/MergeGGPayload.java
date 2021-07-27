@@ -89,19 +89,22 @@ public class MergeGGPayload extends BaseAvroPayload
           validityMap = (Map) validityMapObject;
         }
         // Open "after"
-        String afterString = ggDataMap.get(new Utf8("after")).toString();
-        Map afterMap = (Map)Json.parseJson(afterString);
-        // Actualize validityMap
-        if(afterMap != null){
-          for (Object key : afterMap.keySet()) {
-            Utf8 fieldName = new Utf8(key.toString());
-            Object currentValidityObject = validityMap.get(fieldName);
-            String currentValidityString = null;
-            if(currentValidityObject != null){
-              currentValidityString = currentValidityObject.toString();
-            }
-            if(currentValidityString == null || currentValidityString.length() == 0 || opTsString.compareTo(currentValidityString) > 0){
-              validityMap.put(key, opTsUtf8);
+        Utf8 after = new Utf8("after");
+        if(ggDataMap.containsKey(after)) {
+          String afterString = ggDataMap.get(new Utf8("after")).toString();
+          Map afterMap = (Map) Json.parseJson(afterString);
+          // Actualize validityMap
+          if (afterMap != null) {
+            for (Object key : afterMap.keySet()) {
+              Utf8 fieldName = new Utf8(key.toString());
+              Object currentValidityObject = validityMap.get(fieldName);
+              String currentValidityString = null;
+              if (currentValidityObject != null) {
+                currentValidityString = currentValidityObject.toString();
+              }
+              if (currentValidityString == null || currentValidityString.length() == 0 || opTsString.compareTo(currentValidityString) > 0) {
+                validityMap.put(key, opTsUtf8);
+              }
             }
           }
         }
