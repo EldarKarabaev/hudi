@@ -171,7 +171,6 @@ public class MergeGGPayload extends BaseAvroPayload
             myValidityMap.put(fieldName, anotherValidityMap.get(fieldName));
           }
         }
-        // TODO
         // 2. Merge SortKey and its component
         step = "09a";
         String mySortKey = myRecord.get(SYS_SORT_KEY_COLUMN_NAME).toString();
@@ -196,10 +195,6 @@ public class MergeGGPayload extends BaseAvroPayload
         throw new HoodieException("Merge error 002[" + step + "]: " + e.getMessage(), e);
       }
     }
-
-
-
-
   }
 
   public void mergeAnotherPayload(MergeGGPayload another){
@@ -234,44 +229,6 @@ public class MergeGGPayload extends BaseAvroPayload
     if (isDeleteRecord((GenericRecord) indexedRecord)) {
       return Option.empty();
     } else {
-      /*
-      Object ggDataMapObject = ((GenericRecord) indexedRecord).get(GG_DATA_MAP_COLUMN_NAME);
-      String ggDataMapContents = (ggDataMapObject==null?"NULL":"(" + ggDataMapObject.getClass().getCanonicalName() + ")");
-      Map ggDataMap = (Map)ggDataMapObject;
-
-      if(ggDataMap != null) {
-        for (Object key : ggDataMap.keySet()) {
-          Object value = ggDataMap.get(key);
-          ggDataMapContents = ggDataMapContents
-            + (ggDataMapContents.length() == 0?"":",")
-            + (key==null?"NULL":"(" + key.getClass().getCanonicalName() + ")" + key.toString())
-            + ": " + (value==null?"NULL":"(" + value.getClass().getCanonicalName() + ")" + value.toString())
-          ;
-        }
-
-        ggDataMap.put("ggDataMapContents", ggDataMapContents);
-
-        String afterString = ggDataMap.get(new Utf8("after")).toString();
-        ggDataMap.put("afterString", "[" + afterString + "]");
-
-        Map afterMap = (Map)Json.parseJson(afterString);
-        String afterMapContents = "";
-        if(afterMap == null){
-          afterMapContents = "NULL";
-        } else {
-          for (Object key : afterMap.keySet()) {
-            Object value = afterMap.get(key);
-            afterMapContents = afterMapContents
-              + (afterMapContents.length() == 0?"":",")
-              + (key==null?"NULL":"(" + key.getClass().getCanonicalName() + ")" + key.toString())
-              + ": " + (value==null?"NULL":"(" + value.getClass().getCanonicalName() + ")" + value.toString())
-            ;
-          }
-        }
-        ggDataMap.put("afterMapContents", afterMapContents);
-      }
-      //((GenericRecord) indexedRecord).put("feld","D10, recordBytes:" + recordBytes.length + ", myAvroBytes:" + myAvroBytes.length);
-      */
       return Option.of(indexedRecord);
     }
   }
