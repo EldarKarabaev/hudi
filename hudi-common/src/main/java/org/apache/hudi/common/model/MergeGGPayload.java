@@ -44,7 +44,12 @@ public class MergeGGPayload extends BaseAvroPayload
 
   public static final String GG_DATA_MAP_COLUMN_NAME = "_gg_data_map";
   public static final String GG_VALIDITY_MAP_COLUMN_NAME = "_gg_validity_map";
+  // Sort key value
+  public static final String SYS_SORT_KEY_COLUMN_NAME = "sys_sort_key";
+  // Sort key components
   public static final String OP_TS_COLUMN_NAME = "op_ts";
+  public static final String SYS_POS_COLUMN_NAME = "sys_pos";
+  public static final String SYS_IMPORTED_TIME_COLUMN_NAME = "sys_imported_time";
 
   public static final Utf8 OP_TS_COLUMN_NAME_UTF8 = new Utf8(OP_TS_COLUMN_NAME);
 
@@ -128,6 +133,7 @@ public class MergeGGPayload extends BaseAvroPayload
       return;
     }
 
+    // 1. Merge data fields according to VALIDITY_MAP
     // get another's validityMap
     Map anotherValidityMap = (Map)(another.get(GG_VALIDITY_MAP_COLUMN_NAME));
     // If it is not empty, then we merge more recent data from another
@@ -165,12 +171,34 @@ public class MergeGGPayload extends BaseAvroPayload
             myValidityMap.put(fieldName, anotherValidityMap.get(fieldName));
           }
         }
-        step = "09";
+        // TODO
+        // 2. Merge SortKey and its component
+        step = "09a";
+        String mySortKey = myRecord.get(SYS_SORT_KEY_COLUMN_NAME).toString();
+        step = "09b";
+        String anotherSortKey = another.get(SYS_SORT_KEY_COLUMN_NAME).toString()
+          ;
+        // We replace all three fields if composite key has smaller value
+        if(mySortKey.compareTo(anotherSortKey) < 0){
+          // Accept values from another:  sys_sort_key, _gg_data_map.op_ts, sys_pos, sys_imported_time
+          step = "10a";
+          myRecord.put(SYS_SORT_KEY_COLUMN_NAME, another.get(SYS_SORT_KEY_COLUMN_NAME));
+          step = "10b";
+          ((Map)(myRecord.get(GG_DATA_MAP_COLUMN_NAME))).put(OP_TS_COLUMN_NAME_UTF8, ((Map)(another.get(GG_DATA_MAP_COLUMN_NAME))).get(OP_TS_COLUMN_NAME_UTF8));
+          step = "10c";
+          myRecord.put(SYS_POS_COLUMN_NAME, another.get(SYS_POS_COLUMN_NAME));
+          step = "10d";
+          myRecord.put(SYS_IMPORTED_TIME_COLUMN_NAME, another.get(SYS_IMPORTED_TIME_COLUMN_NAME));
+        }
+        step = "11";
         myAvroBytes = HoodieAvroUtils.avroToBytes(myRecord);
       } catch (Exception e){
         throw new HoodieException("Merge error 002[" + step + "]: " + e.getMessage(), e);
       }
     }
+
+
+
 
   }
 
